@@ -48,7 +48,7 @@ docker-compose up --build
 ```
 
 - Orchestrator-API: [http://localhost:8000](http://localhost:8000)
-- Frontend: [http://localhost:3033](http://localhost:3033)
+- Frontend: [http://localhost:3333](http://localhost:3033)
 
 ### Beispiel: Anfrage an den Orchestrator
 
