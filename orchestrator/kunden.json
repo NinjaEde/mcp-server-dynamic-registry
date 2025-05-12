@@ -1,0 +1,21 @@
+{
+  "kunde1": {
+    "api_key": "abc123",
+    "modules": [
+      "mcp_proalpha",
+      "mcp_hubspot"
+    ]
+  },
+  "kunde2": {
+    "api_key": "xyz789",
+    "modules": [
+      "mcp_docs"
+    ]
+  },
+  "kunde 3": {
+    "api_key": "abc333",
+    "modules": [
+      "mcp_hubspot"
+    ]
+  }
+}

@@ -1,0 +1,60 @@
+services:
+  orchestrator:
+    build: ./orchestrator
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./orchestrator/kunden.json:/app/kunden.json
+    depends_on:
+      - mcp_proalpha
+      - mcp_hubspot
+      - mcp_docs
+      - ollama
+    networks:
+      - mcp_network
+
+  mcp_proalpha:
+    build: ./mcp_proalpha
+    ports:
+      - "8001:8000"
+    networks:
+      - mcp_network
+
+  mcp_hubspot:
+    build: ./mcp_hubspot
+    ports:
+      - "8002:8000"
+    networks:
+      - mcp_network
+
+  mcp_docs:
+    build: ./mcp_docs
+    ports:
+      - "8003:8000"
+    networks:
+      - mcp_network
+
+  frontend:
+    build: ./frontend-react
+    ports:
+      - "3333:3000"
+    depends_on:
+      - orchestrator
+    networks:
+      - mcp_network
+
+  ollama:
+    image: ollama/ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - mcp_network
+
+networks:
+  mcp_network:
+
+volumes:
+  ollama_data:
+
