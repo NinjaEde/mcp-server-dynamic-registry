@@ -84,6 +84,35 @@ Antwort:
 3. In `docker-compose.yml` als neuen Service eintragen.
 4. Im Frontend oder in `kunden.json` dem gewünschten Tenant zuordnen.
 
+## MCP Architektur & Kommunikation
+
+- Die MCP-Module (z.B. mcp_proalpha, mcp_hubspot, mcp_docs) werden nicht als eigenständige HTTP-Services angesprochen, sondern vom Orchestrator als Subprozesse per MCP-Protokoll (stdio) gestartet und angesprochen.
+- Der Orchestrator nutzt die offizielle MCP Python-Clientbibliothek, um die Tools der Module dynamisch aufzurufen.
+- Damit dies funktioniert, müssen alle Python-Abhängigkeiten der Module auch im Orchestrator-Container installiert sein (siehe orchestrator/requirements.txt).
+- Die orchestrator-Query-API startet für jede Anfrage die jeweiligen Module als Subprozess und ruft das Tool (z.B. `answer`) auf.
+- Die Discovery prüft weiterhin, ob die Module im Dateisystem vorhanden sind.
+
+## Wichtige Hinweise für Docker
+
+- Im orchestrator-Service wird das gesamte Projektverzeichnis (`.:/app`) gemountet und das Working Directory auf `/app/orchestrator` gesetzt. Dadurch kann der Orchestrator die Module als Subprozesse starten.
+- Änderungen an den Modulen oder deren Abhängigkeiten erfordern einen Rebuild des orchestrator-Containers:
+  ```bash
+  docker-compose build orchestrator
+  docker-compose up
+  ```
+- Die orchestrator/requirements.txt enthält alle Abhängigkeiten der Module (merge aller requirements.txt).
+
+## Beispiel für ein eigenes MCP-Modul
+
+1. Lege einen neuen Ordner nach Vorbild von `mcp_proalpha` an.
+2. Implementiere ein Tool mit FastMCP (siehe main.py in den Modulen).
+3. Trage das Modul in `docker-compose.yml` und ggf. in `kunden.json` ein.
+4. Nach dem Build kann das Modul dynamisch vom Orchestrator genutzt werden.
+
+---
+
+**Hinweis:** Die Module benötigen keine eigenen HTTP-Endpunkte mehr. Die Kommunikation läuft ausschließlich über das MCP-Protokoll (stdio) und den Orchestrator.
+
 ## Entwicklung
 
 ### Frontend lokal starten

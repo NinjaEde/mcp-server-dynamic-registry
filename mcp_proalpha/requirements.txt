@@ -1,3 +1,5 @@
 fastapi
 uvicorn
+mcp[cli]
+httpx
 

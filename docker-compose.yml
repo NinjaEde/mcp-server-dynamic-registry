@@ -4,12 +4,14 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./orchestrator/kunden.json:/app/kunden.json
+      - ./:/app
+      - ./orchestrator/kunden.json:/app/orchestrator/kunden.json
+    working_dir: /app/orchestrator
     depends_on:
       - mcp_proalpha
       - mcp_hubspot
       - mcp_docs
-      - ollama
+      # - ollama
     networks:
       - mcp_network
 
@@ -43,14 +45,14 @@ services:
     networks:
       - mcp_network
 
-  ollama:
-    image: ollama/ollama
-    ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
-    networks:
-      - mcp_network
+  # ollama:
+  #   image: ollama/ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   networks:
+  #     - mcp_network
 
 networks:
   mcp_network:

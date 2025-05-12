@@ -1,12 +1,12 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+from mcp.server.fastmcp import FastMCP
 
-app = FastAPI()
+mcp = FastMCP("proalpha")
 
-class Frage(BaseModel):
-    frage: str
+@mcp.tool()
+def answer(frage: str) -> str:
+    """Antwortet auf eine Frage zum Thema ProAlpha."""
+    return f"Antwort von ProAlpha: {frage}"
 
-@app.post("/answer")
-def antwort(frage: Frage):
-    return {"antwort": f"Antwort von ProAlpha: {frage.frage}"}
+if __name__ == "__main__":
+    mcp.run(transport="stdio")
 

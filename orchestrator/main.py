@@ -5,9 +5,10 @@ import json
 import socket
 import os
 from typing import List, Dict
-from utils import get_kunde_by_key
+from utils import get_kunde_by_key, call_mcp_tool
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+import asyncio
 
 app = FastAPI()
 
@@ -19,7 +20,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"]
 )
-
+# TODO: Derzeit noch eine starre Konfiguration - besser wäre es, die Konfiguration über eine DB vorzunehmen
 KUNDEN_PATH = "kunden.json"
 
 def load_kunden():
@@ -87,16 +88,16 @@ async def query(request: QueryRequest, x_api_key: str = Header(...)):
         return {"error": "Ungültiger API-Key"}
 
     module_list = config["modules"]
-    available_modules = set(discover_mcp_modules(module_list))
     antworten = []
     for modul in module_list:
-        if modul not in available_modules:
-            antworten.append(f"{modul}: Nicht erreichbar")
+        # Assume each module's main.py is at ../<modul>/main.py relative to orchestrator
+        server_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f"../{modul}/main.py"))
+        if not os.path.exists(server_path):
+            antworten.append(f"{modul}: main.py nicht gefunden")
             continue
         try:
-            async with httpx.AsyncClient() as client:
-                res = await client.post(f"http://{modul}:8000/answer", json={"frage": request.query})
-                antworten.append(f"{modul}: {res.json()['antwort']}")
+            result = await call_mcp_tool(server_path, "answer", {"frage": request.query})
+            antworten.append(f"{modul}: {result}")
         except Exception as e:
             antworten.append(f"{modul}: Fehler - {str(e)}")
 
