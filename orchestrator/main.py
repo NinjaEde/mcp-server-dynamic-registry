@@ -89,17 +89,17 @@ async def query(request: QueryRequest, x_api_key: str = Header(...)):
 
     module_list = config["modules"]
     antworten = []
-    for modul in module_list:
-        # Assume each module's main.py is at ../<modul>/main.py relative to orchestrator
-        server_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f"../{modul}/main.py"))
-        if not os.path.exists(server_path):
-            antworten.append(f"{modul}: main.py nicht gefunden")
-            continue
-        try:
-            result = await call_mcp_tool(server_path, "answer", {"frage": request.query})
-            antworten.append(f"{modul}: {result}")
-        except Exception as e:
-            antworten.append(f"{modul}: Fehler - {str(e)}")
-
+    async with httpx.AsyncClient() as client:
+        for modul in module_list:
+            url = f"http://{modul}:5000/query"
+            try:
+                resp = await client.post(url, json={"query": request.query}, timeout=5.0)
+                if resp.status_code == 200:
+                    antwort = resp.json().get("antwort", str(resp.json()))
+                    antworten.append(f"{modul}: {antwort}")
+                else:
+                    antworten.append(f"{modul}: Fehler - Status {resp.status_code}")
+            except Exception as e:
+                antworten.append(f"{modul}: Fehler - {str(e)}")
     return {"kunde": kunde, "antworten": antworten}
 

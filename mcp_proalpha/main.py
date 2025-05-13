@@ -1,5 +1,8 @@
+from fastapi import FastAPI, Request
+import uvicorn
 from mcp.server.fastmcp import FastMCP
 
+app = FastAPI()
 mcp = FastMCP("proalpha")
 
 @mcp.tool()
@@ -7,6 +10,12 @@ def answer(frage: str) -> str:
     """Antwortet auf eine Frage zum Thema ProAlpha."""
     return f"Antwort von ProAlpha: {frage}"
 
+@app.post("/query")
+async def query(request: Request):
+    data = await request.json()
+    frage = data.get("query", "")
+    return {"antwort": answer(frage)}
+
 if __name__ == "__main__":
-    mcp.run(transport="stdio")
+    uvicorn.run(app, host="0.0.0.0", port=5000)
 
