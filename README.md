@@ -48,7 +48,7 @@ docker-compose up --build
 ```
 
 - Orchestrator-API: [http://localhost:8000](http://localhost:8000)
-- Frontend: [http://localhost:3333](http://localhost:3033)
+- Frontend: [http://localhost:3333](http://localhost:3333)
 
 ### Beispiel: Anfrage an den Orchestrator
 
@@ -80,38 +80,37 @@ Antwort:
 ## Eigene Module hinzufügen
 
 1. Neuen Ordner nach Vorbild von `mcp_proalpha` anlegen.
-2. FastAPI-Service mit `/answer`-Endpoint implementieren.
+2. FastAPI-Service mit `/query`-Endpoint implementieren (siehe main.py in den Modulen).
 3. In `docker-compose.yml` als neuen Service eintragen.
 4. Im Frontend oder in `kunden.json` dem gewünschten Tenant zuordnen.
 
 ## MCP Architektur & Kommunikation
 
-- Die MCP-Module (z.B. mcp_proalpha, mcp_hubspot, mcp_docs) werden nicht als eigenständige HTTP-Services angesprochen, sondern vom Orchestrator als Subprozesse per MCP-Protokoll (stdio) gestartet und angesprochen.
-- Der Orchestrator nutzt die offizielle MCP Python-Clientbibliothek, um die Tools der Module dynamisch aufzurufen.
-- Damit dies funktioniert, müssen alle Python-Abhängigkeiten der Module auch im Orchestrator-Container installiert sein (siehe orchestrator/requirements.txt).
-- Die orchestrator-Query-API startet für jede Anfrage die jeweiligen Module als Subprozess und ruft das Tool (z.B. `answer`) auf.
-- Die Discovery prüft weiterhin, ob die Module im Dateisystem vorhanden sind.
+- Die MCP-Module (z.B. mcp_proalpha, mcp_hubspot, mcp_docs) laufen als eigenständige HTTP-Services (FastAPI, Port 5000) in eigenen Containern.
+- Der Orchestrator kommuniziert mit den Modulen über HTTP-Requests an die jeweiligen Service-Namen und Ports im internen Docker-Netzwerk (z.B. `http://mcp_proalpha:5000/query`).
+- Die orchestrator-Query-API leitet Anfragen an die konfigurierten Module weiter und aggregiert die Antworten.
+- Die Discovery prüft weiterhin, ob die Module im Netzwerk erreichbar sind.
 
 ## Wichtige Hinweise für Docker
 
-- Im orchestrator-Service wird das gesamte Projektverzeichnis (`.:/app`) gemountet und das Working Directory auf `/app/orchestrator` gesetzt. Dadurch kann der Orchestrator die Module als Subprozesse starten.
-- Änderungen an den Modulen oder deren Abhängigkeiten erfordern einen Rebuild des orchestrator-Containers:
+- Jeder Service läuft in einem eigenen Container und ist über den Service-Namen im Docker-Netzwerk erreichbar.
+- Änderungen an den Modulen oder deren Abhängigkeiten erfordern einen Rebuild des jeweiligen Containers:
   ```bash
-  docker-compose build orchestrator
+  docker-compose build
   docker-compose up
   ```
-- Die orchestrator/requirements.txt enthält alle Abhängigkeiten der Module (merge aller requirements.txt).
+- Jede requirements.txt enthält die Abhängigkeiten des jeweiligen Moduls. Der Orchestrator benötigt nur seine eigenen Abhängigkeiten.
 
 ## Beispiel für ein eigenes MCP-Modul
 
 1. Lege einen neuen Ordner nach Vorbild von `mcp_proalpha` an.
-2. Implementiere ein Tool mit FastMCP (siehe main.py in den Modulen).
+2. Implementiere ein Tool als FastAPI-Service mit `/query`-Endpoint (siehe main.py in den Modulen).
 3. Trage das Modul in `docker-compose.yml` und ggf. in `kunden.json` ein.
 4. Nach dem Build kann das Modul dynamisch vom Orchestrator genutzt werden.
 
 ---
 
-**Hinweis:** Die Module benötigen keine eigenen HTTP-Endpunkte mehr. Die Kommunikation läuft ausschließlich über das MCP-Protokoll (stdio) und den Orchestrator.
+**Hinweis:** Die Module werden als HTTP-Services angesprochen. Die Kommunikation läuft ausschließlich über HTTP und den Orchestrator.
 
 ## Entwicklung
 
@@ -125,7 +124,7 @@ npm start
 
 ### Backend-Änderungen
 
-- Änderungen an Python-Code erfordern einen Neustart des jeweiligen Containers:
+- Änderungen am Python-Code erfordern einen Neustart des jeweiligen Containers:
   ```bash
   docker-compose restart orchestrator mcp_proalpha mcp_hubspot mcp_docs
   ```

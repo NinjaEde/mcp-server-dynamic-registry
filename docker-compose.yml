@@ -11,7 +11,6 @@ services:
       - mcp_proalpha
       - mcp_hubspot
       - mcp_docs
-      # - ollama
     networks:
       - mcp_network
 
@@ -45,18 +44,6 @@ services:
     networks:
       - mcp_network
 
-  # ollama:
-  #   image: ollama/ollama
-  #   ports:
-  #     - "11434:11434"
-  #   volumes:
-  #     - ollama_data:/root/.ollama
-  #   networks:
-  #     - mcp_network
-
 networks:
   mcp_network:
-
-volumes:
-  ollama_data:
 
